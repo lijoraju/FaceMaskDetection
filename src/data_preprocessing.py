@@ -1,13 +1,17 @@
 # Data loading and preprocessing
 
-import numpy as np
+from src.utils import load_config
+
 import xml.etree.ElementTree as ET
 import pandas as pd
 import os
 import cv2
-import torch
-import torchvision.transforms as transforms
-from sklearn.model_selection import train_test_split
+import torchvision.transforms as T
+from torch.utils.data import Dataset
+from PIL import Image
+
+config = load_config()
+LABEL_MAP = config['label_map']
 
 
 def parse_xml(file_path):
@@ -58,105 +62,52 @@ def process_annotations(annotation_path):
     return pd.DataFrame(data, columns=['filename', 'label', 'bbox'])
 
 
-def create_face_dataset(df, image_path, target_size=(224, 224)):
-    """Creates a PyTorch dataset of face images and labels.
-
-    Args:
-        df: Pandas DataFrame containing 'filename', 'label', and 'bbox' columns.
-        image_path: Path to the directory containing the images.
-        target_size: Tuple (height, width) specifying the desired size of the images.
-
-    Returns:
-        Tuple (face_images, face_labels), where face_images is a PyTorch tensor
-        and face_labels is a PyTorch tensor. Returns empty tensors if an error occurs.
-    """
-
-    face_images = []
-    face_labels = []
-
-    try:
-        for _, row in df.iterrows():
-            bbox = row['bbox']
-            image_path_full = os.path.join(image_path, row['filename'])
-            image = cv2.imread(image_path_full)
-
-            if image is None:
-                print(f"Error: Could not read image {image_path_full}")
-                return torch.tensor([]), torch.tensor([])
-
-            cropped_image = image[bbox['ymin']:bbox['ymax'], bbox['xmin']:bbox['xmax']]
-            resized_image = cv2.resize(cropped_image, target_size)
-            
-            # Convert to PyTorch tensor and adjust dimensions (HWC to CHW)
-            image_tensor = transforms.ToTensor()(resized_image)
-
-            # Normalize (using ImageNet stats, common practice)
-            image_tensor = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(image_tensor)
-            
-            face_images.append(image_tensor)
-            face_labels.append(LABEL_MAP[row['label']])
-
-        # Stack the list of tensors into a single tensor
-        face_images = torch.stack(face_images)
-        face_labels = torch.tensor(face_labels)  # Create a tensor from the list
-
-        return face_images, face_labels
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return torch.tensor([]), torch.tensor([])
-
-
- def get_augmentation_transform(p=0.5): 
-    """Creates a PyTorch transformation pipeline for data augmentation.
-
-    Args:
-        p (float): The probability of applying the RandomApply transformation.
-
-    Returns:
-        torchvision.transforms.Compose: A composition of transformations.
-    """
-
+def get_augmentation_transform(p=0.5):
+    """Creates a PyTorch transformation pipeline for data augmentation."""
     transform_list = []
 
     transform_list.extend([
-        transforms.RandomApply([
-            transforms.RandomRotation(degrees=25),
-            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=(0.1,0.1)), # Combined zoom, shear, translate
-            transforms.RandomHorizontalFlip(p=0.5) # Horizontal flip
+        T.RandomApply([
+            T.RandomRotation(degrees=25),
+            T.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=(0.1,0.1)),
+            T.RandomHorizontalFlip(p=0.5)
         ], p=p),
-        transforms.ToTensor() 
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    return transforms.Compose(transform_list)
+    return T.Compose(transform_list)
 
 
-def split_data(features, labels, test_size=0.2, random_state=42, stratify=None):
-    """Splits data into training and testing sets.
+class FaceMaskDataset(Dataset):
+    def __init__(self, df, image_path, target_size=(224, 224), augment=False):
+        self.df = df
+        self.image_path = image_path
+        self.target_size = target_size
+        self.augment = augment
+        self.transform = get_augmentation_transform() if augment else T.Compose([T.ToTensor(),T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
-    Args:
-        features: The feature data (e.g., face images). NumPy array or PyTorch tensor.
-        labels: The labels corresponding to the features. NumPy array or PyTorch tensor.
-        test_size: The proportion of the data to include in the test set.
-        random_state: Controls the random number generation for shuffling.
-        stratify: Data to stratify on.  If labels are imbalanced, this is very important.
+    def __len__(self):
+        return len(self.df)
 
-    Returns:
-        Tuple: train_features, test_features, train_labels, test_labels.  Returns empty arrays/tensors if there's an issue.
-    """
+    def __getitem__(self, idx):
+        row = self.df.iloc[idx]
+        bbox = row['bbox']
+        image_path_full = os.path.join(self.image_path, row['filename'])
+        image = cv2.imread(image_path_full)
 
-    try:
-        train_features, test_features, train_labels, test_labels = train_test_split(
-            features, labels, test_size=test_size, random_state=random_state, stratify=stratify
-        )
-        return train_features, test_features, train_labels, test_labels
+        if image is None:
+            print(f"Error: Could not read image {image_path_full}")
+            return None
 
-    except Exception as e:
-        print(f"Error during data split: {e}")
-        # Return empty arrays or tensors depending on the input type
-        if isinstance(features, np.ndarray):
-            return np.array([]), np.array([]), np.array([]), np.array([])
-        elif isinstance(features, torch.Tensor):
-            return torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
-        else:
-            return None, None, None, None 
+        cropped_image = image[bbox['ymin']:bbox['ymax'], bbox['xmin']:bbox['xmax']]
+        resized_image = cv2.resize(cropped_image, self.target_size)
+
+        pil_image = Image.fromarray(resized_image)
+        image_tensor = self.transform(pil_image) 
+
+
+        label = LABEL_MAP[row['label']]
+
+        return image_tensor, label
+
