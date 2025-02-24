@@ -2,7 +2,7 @@
 import cv2
 import torch
 import torchvision.transforms as T
-from src.model import create_vgg16bn_model 
+from src.model import load_resnet_model
 from src.utils import load_config
 from PIL import Image
 import mediapipe as mp
@@ -11,17 +11,14 @@ def realtime_detection(device="cpu"):
     config = load_config()
     if not config:
         exit("Failed to load configuration. Exiting.")
-    BEST_MODEL_PATH = config['best_model_path']
+    MODEL_PATH = config['best_model_path']
 
     # MediaPipe face detection setup
     mp_face_detection = mp.solutions.face_detection
     face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
 
     # Load the trained model
-    model = create_vgg16bn_model(num_classes=3, pretrained=False)
-    model.load_state_dict(torch.load(BEST_MODEL_PATH, map_location=device))
-    model.to(device)
-    model.eval()
+    model = load_resnet_model(MODEL_PATH, num_classes=3, resnet_version="resnet50", device=device)
 
     # OpenCV setup
     cap = cv2.VideoCapture(0)  # default camera

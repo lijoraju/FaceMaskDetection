@@ -1,19 +1,27 @@
 # PyTorch model architecture
+import torch
 import torchvision.models as models
 import torch.nn as nn
 from torchvision.models import VGG16_BN_Weights
 
+def create_resnet_model(num_classes=3, pretrained=True, resnet_version="resnet50"):  
+    """Creates a ResNet model."""
+    if resnet_version == "resnet18":
+        model = models.resnet18(pretrained=pretrained)
+    elif resnet_version == "resnet34":
+        model = models.resnet34(pretrained=pretrained)
+    elif resnet_version == "resnet50":
+        model = models.resnet50(pretrained=pretrained)
+    else:
+        raise ValueError("Invalid ResNet version. Choose from 'resnet18', 'resnet34', 'resnet50'.")
 
-def create_vgg16bn_model(num_classes, pretrained=True):
-    """Creates a pre-trained VGG16 with Batch Normalization model."""
-    
-    weights = VGG16_BN_Weights.IMAGENET1K_V1 if pretrained else None 
-    
-    # Load the pre-trained VGG16 with Batch Normalization
-    model = models.vgg16_bn(weights=weights)
+    in_features = model.fc.in_features  
+    model.fc = nn.Linear(in_features, num_classes)
+    return model
 
-    # Modify the last layer 
-    in_features = model.classifier[6].in_features  # Get input features of last layer
-    model.classifier[6] = nn.Linear(in_features, num_classes)  # Replace last layer
-
+def load_resnet_model(model_path, num_classes=3, resnet_version="resnet50", device="cpu"):
+    model = create_resnet_model(num_classes, pretrained=False, resnet_version=resnet_version)
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    model.to(device)
+    model.eval()
     return model

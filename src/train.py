@@ -89,7 +89,7 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
         # Save the best model
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
-            torch.save(model.state_dict(), 'best_model.pth')
+            torch.save(model.state_dict(), 'models/checkpoints/best_model.pth')
             print("Best model saved!")
             epochs_no_improve = 0
         else:
