@@ -1,6 +1,4 @@
 # PyTorch model architecture
-
-import torch
 import torchvision.models as models
 import torch.nn as nn
 from torchvision.models import VGG16_BN_Weights

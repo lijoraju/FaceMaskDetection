@@ -1,5 +1,6 @@
 # Training loop
-
+import torch
+import torch.nn as nn
 import torch.optim as optim
 from rich.progress import track
 import matplotlib.pyplot as plt

@@ -1,5 +1,4 @@
 # Data loading and preprocessing
-
 from src.utils import load_config
 
 import xml.etree.ElementTree as ET
@@ -10,13 +9,9 @@ import torchvision.transforms as T
 from torch.utils.data import Dataset
 from PIL import Image
 
-config = load_config()
-LABEL_MAP = config['label_map']
-
-
 def parse_xml(file_path):
     """Parses an XML annotation file and returns a list of annotations."""
-
+    
     try:
         tree = ET.parse(file_path)
         root = tree.getroot()
@@ -106,7 +101,10 @@ class FaceMaskDataset(Dataset):
         pil_image = Image.fromarray(resized_image)
         image_tensor = self.transform(pil_image) 
 
-
+        config = load_config()
+        if not config:
+            exit("Failed to load configuration. Exiting.")
+        LABEL_MAP = config['label_map']
         label = LABEL_MAP[row['label']]
 
         return image_tensor, label
