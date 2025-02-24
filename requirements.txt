@@ -1,1 +1,10 @@
-# List of dependencies
+matplotlib==3.10.0
+mediapipe==0.10.21
+numpy==2.2.3
+opencv_contrib_python==4.11.0.86
+pandas==2.2.3
+PyYAML==6.0.2
+rich==13.9.4
+scikit_learn==1.6.1
+torch==2.2.2
+torchvision==0.17.2
