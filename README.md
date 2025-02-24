@@ -10,8 +10,6 @@ This project implements a face mask detection system using PyTorch, OpenCV, and 
   - [Training](#training)
   - [Inference](#inference)
   - [Real-time Detection](#real-time-detection)
-- [Project Structure](#project-structure)
-- [Model Selection](#model-selection)
 - [Dataset](#dataset)
 - [Contributing](#contributing)
 - [License](#license)
@@ -24,19 +22,22 @@ The COVID-19 pandemic highlighted the importance of wearing face masks to preven
 
 1. **Clone the repository:**
 
-```bash
-git clone https://github.com/lijoraju/FaceMaskDetection.git
-cd face-mask-detection
+  ```bash
+  git clone https://github.com/lijoraju/FaceMaskDetection.git
+  cd face-mask-detection
+ ```
 
 2. **Create a Conda environment (recommended):**
 
 ```bash
 conda create --name myenv python=3.11
 conda activate myenv
+```
 
 3. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
+```
 
 ## Usage
 
@@ -46,20 +47,23 @@ To train the model, run the following command:
 
 ```bash
 python main.py --train 
+```
 
 ### Inference
 
 To perform inference on a single image, use the following command:
 
 ```bash
-python main.py --inference path/to/your/image.jpg 
+python main.py --inference path/to/your/image.jpg
+```
 
 ### Real-time Detection
 
 To run real-time face mask detection from your camera, execute the following command:
 
 ```bash
-    python main.py --realtime 
+    python main.py --realtime
+```
 
 Press 'q' to quit the real-time detection.
 
