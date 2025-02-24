@@ -11,3 +11,5 @@ label_map:
 target_size: [224, 224] #Example
 batch_size: 32 #Example
 learning_rate: 0.001 #Example
+
+best_model_path: models/checkpoints/best_model.pth
