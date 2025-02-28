@@ -2,7 +2,7 @@ huggingface_hub==0.29.1
 kagglehub==0.3.10
 matplotlib==3.10.1
 mediapipe==0.10.21
-numpy
+numpy==1.26.4
 opencv_contrib_python==4.11.0.86
 pandas==2.2.3
 Pillow==11.1.0
@@ -10,6 +10,6 @@ PyYAML==6.0.2
 rich==13.9.4
 scikit_learn==1.6.1
 streamlit==1.42.2
-streamlit_webrtc
+streamlit_webrtc==0.47.9
 torch==2.2.2
 torchvision==0.17.2
