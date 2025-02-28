@@ -8,6 +8,12 @@ import mediapipe as mp
 from src.model import load_mobilenetv3_model  
 from src.utils import load_config
 
+class_colors = {
+    'with_mask': (0, 255, 0), 
+    'without_mask': (0, 0, 255), 
+    'mask_weared_incorrect': (255, 0, 0) 
+}
+
 # Load configuration and model
 config = load_config()
 if config:
@@ -79,7 +85,7 @@ def main():
         uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
         if uploaded_file is not None:
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Uploaded Image.", use_column_width=True)
+            st.image(image, caption="Uploaded Image.", use_container_width=True)
             st.write("")
             st.write("Predicting...")
 
@@ -91,8 +97,9 @@ def main():
 
                 if bbox:
                     frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
-                    st.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), caption="Detected Face", use_column_width=True)
+                    color = class_colors[predicted_class]
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                    st.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), caption="Detected Face", use_container_width=True)
 
             else:
                 st.write("No face detected.")
@@ -117,10 +124,11 @@ def main():
 
             if predicted_class:
                 if bbox:
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
-                    cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    color = class_colors[predicted_class]
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                    cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-            frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_column_width=True)
+            frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
