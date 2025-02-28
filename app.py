@@ -50,7 +50,7 @@ class_names = ['with_mask', 'without_mask', 'mask_weared_incorrect']
 
 
 # Check if running in Streamlit Community Cloud
-if 'STREAMLIT_SERVER_ADDRESS' in os.environ or True:
+if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
     # Running in Streamlit Community Cloud
     from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 
@@ -172,11 +172,10 @@ def main():
                 st.write("No face detected.")
 
     elif mode == "Live Camera":
-        if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
+        if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
             webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
         else:
-            webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
-            # live_camera_local()
+            live_camera_local()
 
 
 if __name__ == "__main__":
