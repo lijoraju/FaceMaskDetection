@@ -6,6 +6,7 @@ from rich.progress import track
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, precision_recall_curve, auc
 
 
 def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.001, patience=3, device="cpu"):
@@ -69,6 +70,10 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
         val_correct = 0
         val_total = 0
 
+        all_preds = []
+        all_labels = []
+        all_probs = []
+
         with torch.no_grad():  # Disable gradients for validation
             for images, labels in track(val_loader, description=f"Epoch {epoch+1}/{num_epochs} [Val]"):
                 images = images.to(device)
@@ -78,18 +83,34 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
                 loss = criterion(outputs, labels)
 
                 val_loss += loss.item() * images.size(0)
+                probs = torch.nn.functional.softmax(outputs, dim=1)
                 _, predicted = torch.max(outputs.data, 1)
+
                 val_total += labels.size(0)
                 val_correct += (predicted == labels).sum().item()
-                
+
+                all_preds.extend(predicted.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                all_probs.extend(probs.cpu().numpy())
+
 
         avg_val_loss = val_loss / val_total
         val_accuracy = 100 * val_correct / val_total
         val_losses.append(avg_val_loss)
 
+        precision = precision_score(all_labels, all_preds, average='weighted')
+        recall = recall_score(all_labels, all_preds, average='weighted')
+        f1 = f1_score(all_labels, all_preds, average='weighted')
+
+        all_probs = np.array(all_probs)
+        all_labels_one_hot = np.eye(3)[all_labels] #One hot encode labels
+        precision_curve, recall_curve, _ = precision_recall_curve(all_labels_one_hot.ravel(), all_probs.ravel())
+        auc_pr = auc(recall_curve, precision_curve)
+
         print(f"Epoch [{epoch+1}/{num_epochs}], "
               f"Train Loss: {avg_train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, "
-              f"Val Loss: {avg_val_loss:.4f}, Val Accuracy: {val_accuracy:.2f}%")
+              f"Val Loss: {avg_val_loss:.4f}, Val Accuracy: {val_accuracy:.2f}%, "
+              f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1-Score: {f1:.4f}, AUC-PR: {auc_pr:.4f}")
 
         # Save the best model
         if avg_val_loss < best_val_loss:
@@ -115,6 +136,7 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
     plt.legend()
     plt.grid(True)
     plt.show()
+
 
 def calculate_class_weights(labels):
     """Calculates class weights for imbalanced datasets."""
