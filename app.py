@@ -7,6 +7,7 @@ import torchvision.transforms as T
 import mediapipe as mp
 from src.model import load_mobilenetv3_model  
 from src.utils import load_config
+from huggingface_hub import hf_hub_download
 
 class_colors = {
     'with_mask': (0, 255, 0), 
@@ -18,11 +19,19 @@ class_colors = {
 config = load_config()
 if config:
     MODEL_PATH = config['best_model_path']
+    MODEL_NAME = config['model_name']
+    REPO_ID = config['repo_id']
 else:
     exit("Failed to load configuration. Exiting.")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = load_mobilenetv3_model(MODEL_PATH, num_classes=3, device=device)
+
+def load_model():
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_NAME)
+    model = load_mobilenetv3_model(model_path, num_classes=3, device=device)
+    return model
+
+model = load_model()
 
 # MediaPipe face detection setup
 mp_face_detection = mp.solutions.face_detection
