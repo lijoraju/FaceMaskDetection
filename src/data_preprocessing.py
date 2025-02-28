@@ -8,6 +8,24 @@ import cv2
 import torchvision.transforms as T
 from torch.utils.data import Dataset
 from PIL import Image
+import kagglehub
+
+def download_dataset(dataset):
+    andrewmvd_face_mask_detection_path = kagglehub.dataset_download(dataset)
+    print('Data source import complete.')
+
+    for item in os.listdir(andrewmvd_face_mask_detection_path):
+        path = os.path.join(andrewmvd_face_mask_detection_path, item)
+
+        if item == 'annotations':
+            annotation_path = path
+        elif item == 'images':
+            image_path = path
+        else:
+            print(f"Error {item}")
+            return None, None
+
+    return annotation_path, image_path
 
 def parse_xml(file_path):
     """Parses an XML annotation file and returns a list of annotations."""
