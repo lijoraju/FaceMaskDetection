@@ -5,7 +5,6 @@ import torch
 import torchvision.transforms as T
 from PIL import Image  
 import mediapipe as mp
-from src.utils import load_config
 
 def inference(model, image_path, device="cpu"):
     """Performs inference on a single image.

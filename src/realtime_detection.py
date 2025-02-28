@@ -2,7 +2,7 @@
 import cv2
 import torch
 import torchvision.transforms as T
-from src.model import load_resnet_model
+from src.model import load_mobilenetv3_model
 from src.utils import load_config
 from PIL import Image
 import mediapipe as mp
@@ -18,7 +18,7 @@ def realtime_detection(device="cpu"):
     face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
 
     # Load the trained model
-    model = load_resnet_model(MODEL_PATH, num_classes=3, resnet_version="resnet50", device=device)
+    model = load_mobilenetv3_model(MODEL_PATH, num_classes=3, mobilenet_version="mobilenet_v3_large", device=device)
 
     # OpenCV setup
     cap = cv2.VideoCapture(0)  # default camera

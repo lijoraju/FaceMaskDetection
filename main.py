@@ -4,7 +4,7 @@ import argparse
 from src.train import train_model  
 from src.inference import inference
 from src.data_preprocessing import FaceMaskDataset, process_annotations
-from src.model import create_resnet_model, load_resnet_model
+from src.model import create_mobilenetv3_model, load_mobilenetv3_model
 from src.evaluate import evaluate_test_set
 from src.utils import load_config
 from src.realtime_detection import realtime_detection
@@ -48,17 +48,17 @@ if __name__ == "__main__":
         val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
         test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
  
-        model = create_resnet_model(num_classes=3, pretrained=True, resnet_version="resnet50")
+        model = create_mobilenetv3_model(num_classes=3, pretrained=True)
         model.to(device)
 
         train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.001, device=device)
         print("Training finished!")
         # After training, load the best model and evaluate on the test set:
-        model = load_resnet_model(MODEL_PATH, num_classes=3, resnet_version="resnet50", device=device)
+        model = load_mobilenetv3_model(MODEL_PATH, num_classes=3, device=device)
         test_loss, test_accuracy = evaluate_test_set(model, test_loader, device)
         print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
     elif args.inference:
-        model = load_resnet_model(MODEL_PATH, num_classes=3, resnet_version="resnet50", device=device)
+        model = load_mobilenetv3_model(MODEL_PATH, num_classes=3, device=device)
         predicted_class, probabilities = inference(model, args.inference, device)
         if predicted_class is not None:
             print(f"Predicted Class: {predicted_class}")
