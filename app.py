@@ -8,6 +8,8 @@ import mediapipe as mp
 from src.model import load_mobilenetv3_model  
 from src.utils import load_config
 from huggingface_hub import hf_hub_download
+import os
+
 
 class_colors = {
     'with_mask': (0, 255, 0), 
@@ -45,6 +47,61 @@ transform = T.Compose([
 ])
 
 class_names = ['with_mask', 'without_mask', 'mask_weared_incorrect']
+
+
+# Check if running in Streamlit Community Cloud
+if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
+    # Running in Streamlit Community Cloud
+    from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+
+    class VideoTransformer(VideoTransformerBase):
+        def transform(self, frame):
+            img = frame.to_ndarray(format="bgr24")
+            image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            predicted_class, probability, bbox = predict(image)
+
+            if predicted_class:
+                if bbox:
+                    color = class_colors[predicted_class]
+                    cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                    cv2.putText(img, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+            return img
+        
+else:
+    # Running locally
+    def live_camera_local():
+        st.write("Opening camera...")
+        video_capture = cv2.VideoCapture(0)
+
+        if not video_capture.isOpened():
+            st.error("Could not open camera.")
+            return
+
+        frame_placeholder = st.empty()
+
+        while True:
+            ret, frame = video_capture.read()
+            if not ret:
+                break
+
+            image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            predicted_class, probability, bbox = predict(image)
+
+            if predicted_class:
+                if bbox:
+                    color = class_colors[predicted_class]
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                    cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+            frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        video_capture.release()
+        cv2.destroyAllWindows()
+
 
 def predict(image):
     """Predicts the mask status for a given image."""
@@ -84,7 +141,8 @@ def predict(image):
             return None, None, None
     else:
         return None, None, None
-
+    
+    
 def main():
     st.title("Face Mask Detection")
 
@@ -114,36 +172,11 @@ def main():
                 st.write("No face detected.")
 
     elif mode == "Live Camera":
-        st.write("Opening camera...")
-        video_capture = cv2.VideoCapture(0)
+        if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
+            webrtc_streamer(key="live-detection", video_transformer_factory=VideoTransformer)
+        else:
+            live_camera_local()
 
-        if not video_capture.isOpened():
-            st.error("Could not open camera.")
-            return
-
-        frame_placeholder = st.empty()
-
-        while True:
-            ret, frame = video_capture.read()
-            if not ret:
-                break
-
-            image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            predicted_class, probability, bbox = predict(image)
-
-            if predicted_class:
-                if bbox:
-                    color = class_colors[predicted_class]
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
-                    cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-            frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        video_capture.release()
-        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
