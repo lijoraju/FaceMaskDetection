@@ -52,10 +52,10 @@ class_names = ['with_mask', 'without_mask', 'mask_weared_incorrect']
 # Check if running in Streamlit Community Cloud
 if 'STREAMLIT_SERVER_ADDRESS' in os.environ or True:
     # Running in Streamlit Community Cloud
-    from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 
-    class VideoTransformer(VideoTransformerBase):
-        def transform(self, frame):
+    class VideoProcessor(VideoProcessorBase):
+        def recv(self, frame):
             img = frame.to_ndarray(format="bgr24")
             image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             predicted_class, probability, bbox = predict(image)
@@ -173,9 +173,9 @@ def main():
 
     elif mode == "Live Camera":
         if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
-            webrtc_streamer(key="live-detection", video_transformer_factory=VideoTransformer)
+            webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
         else:
-            webrtc_streamer(key="live-detection", video_transformer_factory=VideoTransformer)
+            webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
             # live_camera_local()
 
 
