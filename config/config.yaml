@@ -13,4 +13,4 @@ learning_rate: 0.001
 num_epochs: 10
 patience: 4
 
-best_model_path: models/checkpoints/best_model.pth
+best_model_path: models/final/best_model.pth

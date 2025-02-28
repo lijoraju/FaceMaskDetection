@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, precision_recall_curve, auc
+import os
 
 
 def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.001, patience=3, device="cpu"):
@@ -115,8 +116,7 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
         # Save the best model
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
-            torch.save(model.state_dict(), 'models/checkpoints/best_model.pth')
-            print("Best model saved!")
+            save_checkpoint(model=model, checkpoint_name=f"epoch_{epoch+1}.pth")
             epochs_no_improve = 0
         else:
             epochs_no_improve +=1
@@ -147,3 +147,19 @@ def calculate_class_weights(labels):
         y=class_labels
     )
     return torch.tensor(class_weights, dtype=torch.float)
+
+
+def save_checkpoint(model, checkpoint_name='best_model.pth', models_dir='models', checkpoints_dir='checkpoints'):
+    """Saves a model checkpoint to a specified directory."""
+
+    if not os.path.exists(models_dir):
+        os.makedirs(models_dir)
+
+    checkpoints_path = os.path.join(models_dir, checkpoints_dir)
+    if not os.path.exists(checkpoints_path):
+        os.makedirs(checkpoints_path)
+
+    checkpoint_path = os.path.join(checkpoints_path, checkpoint_name)
+
+    torch.save(model.state_dict(), checkpoint_path)
+    print(f"Model saved to {checkpoint_path}")
