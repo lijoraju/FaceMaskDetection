@@ -1,15 +1,16 @@
 # Configuration settings
 
-annotation_path: /kaggle/input/face-mask-detection/annotations
-image_path: /kaggle/input/face-mask-detection/images
+kaggle_dataset: andrewmvd/face-mask-detection
 
 label_map:
   with_mask: 0
   without_mask: 1
   mask_weared_incorrect: 2
 
-target_size: [224, 224] #Example
-batch_size: 32 #Example
-learning_rate: 0.001 #Example
+target_size: [224, 224] 
+batch_size: 32 
+learning_rate: 0.001
+num_epochs: 10
+patience: 4
 
 best_model_path: models/checkpoints/best_model.pth
