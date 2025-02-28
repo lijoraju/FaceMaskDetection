@@ -50,7 +50,7 @@ class_names = ['with_mask', 'without_mask', 'mask_weared_incorrect']
 
 
 # Check if running in Streamlit Community Cloud
-if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
+if 'STREAMLIT_SERVER_ADDRESS' in os.environ or True:
     # Running in Streamlit Community Cloud
     from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
@@ -175,7 +175,8 @@ def main():
         if 'STREAMLIT_SERVER_ADDRESS' in os.environ:
             webrtc_streamer(key="live-detection", video_transformer_factory=VideoTransformer)
         else:
-            live_camera_local()
+            webrtc_streamer(key="live-detection", video_transformer_factory=VideoTransformer)
+            # live_camera_local()
 
 
 if __name__ == "__main__":
