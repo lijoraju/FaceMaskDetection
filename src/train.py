@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from rich.progress import track
 import matplotlib.pyplot as plt
+from sklearn.utils import class_weight
+import numpy as np
 
 
 def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.001, patience=3, device="cpu"):
@@ -23,7 +25,10 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
         Saves the best model checkpoint to 'best_model.pth'.
     """
 
-    criterion = nn.CrossEntropyLoss()  # Loss function (adjust if needed)
+    all_labels = torch.cat([labels for images, labels in train_loader])
+    class_weights = calculate_class_weights(all_labels).to(device)
+
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)  # Optimizer
 
     best_val_loss = float('inf')  # Initialize best validation loss
@@ -110,3 +115,13 @@ def train_model(model, train_loader, val_loader, num_epochs=10, learning_rate=0.
     plt.legend()
     plt.grid(True)
     plt.show()
+
+def calculate_class_weights(labels):
+    """Calculates class weights for imbalanced datasets."""
+    class_labels = labels.cpu().numpy()
+    class_weights = class_weight.compute_class_weight(
+        'balanced',
+        classes=np.unique(class_labels),
+        y=class_labels
+    )
+    return torch.tensor(class_weights, dtype=torch.float)

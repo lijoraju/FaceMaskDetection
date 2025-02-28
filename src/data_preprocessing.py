@@ -65,7 +65,8 @@ def get_augmentation_transform(p=0.5):
         T.RandomApply([
             T.RandomRotation(degrees=25),
             T.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=(0.1,0.1)),
-            T.RandomHorizontalFlip(p=0.5)
+            T.RandomHorizontalFlip(p=0.5),
+            T.ColorJitter(brightness=0.5, hue=0.3)
         ], p=p),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
