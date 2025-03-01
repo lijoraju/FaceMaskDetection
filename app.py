@@ -173,8 +173,7 @@ def main():
 
     elif mode == "Live Camera":
         if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
-            live_camera_local()
-            # webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
+            webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
         else:
             live_camera_local()
 
