@@ -2,6 +2,10 @@
 
 This project implements a face mask detection system using PyTorch, OpenCV, and MediaPipe. It can be used for real-time detection from a camera or for classifying images.
 
+**For Live Demo**: https://face-mask-detection-demo.streamlit.app/   
+
+**For model**: https://huggingface.co/lijoraju/face_mask_detector_model
+
 ## Table of Contents
 
 - [Introduction](#introduction)
