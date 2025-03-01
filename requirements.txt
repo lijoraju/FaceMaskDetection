@@ -13,3 +13,4 @@ streamlit==1.42.2
 streamlit_webrtc==0.47.9
 torch==2.2.2
 torchvision==0.17.2
+av

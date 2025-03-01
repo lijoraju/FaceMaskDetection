@@ -8,8 +8,8 @@ import mediapipe as mp
 from src.model import load_mobilenetv3_model  
 from src.utils import load_config
 from huggingface_hub import hf_hub_download
-# import os
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 
 
 class_colors = {
@@ -61,62 +61,40 @@ class VideoProcessor(VideoProcessorBase):
                 cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
                 cv2.putText(img, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        return img
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+    
 
-"""
-# Check if running in Streamlit Community Cloud
-if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
-    # Running in Streamlit Community Cloud
-    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+def live_camera_local():
+    st.write("Opening camera...")
+    video_capture = cv2.VideoCapture(0)
 
-    class VideoProcessor(VideoProcessorBase):
-        def recv(self, frame):
-            img = frame.to_ndarray(format="bgr24")
-            image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            predicted_class, probability, bbox = predict(image)
+    if not video_capture.isOpened():
+        st.error("Could not open camera.")
+        return
 
-            if predicted_class:
-                if bbox:
-                    color = class_colors[predicted_class]
-                    cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
-                    cv2.putText(img, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    frame_placeholder = st.empty()
 
-            return img
-        
-else:
-    # Running locally
-    def live_camera_local():
-        st.write("Opening camera...")
-        video_capture = cv2.VideoCapture(0)
+    while True:
+        ret, frame = video_capture.read()
+        if not ret:
+            break
 
-        if not video_capture.isOpened():
-            st.error("Could not open camera.")
-            return
+        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        predicted_class, probability, bbox = predict(image)
 
-        frame_placeholder = st.empty()
+        if predicted_class:
+            if bbox:
+                color = class_colors[predicted_class]
+                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        while True:
-            ret, frame = video_capture.read()
-            if not ret:
-                break
+        frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
 
-            image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            predicted_class, probability, bbox = predict(image)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-            if predicted_class:
-                if bbox:
-                    color = class_colors[predicted_class]
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
-                    cv2.putText(frame, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-            frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        video_capture.release()
-        cv2.destroyAllWindows()
-"""
+    video_capture.release()
+    cv2.destroyAllWindows()
 
 def predict(image):
     """Predicts the mask status for a given image."""
@@ -156,8 +134,7 @@ def predict(image):
             return None, None, None
     else:
         return None, None, None
-    
-    
+     
 def main():
     st.title("Face Mask Detection")
 
@@ -188,10 +165,7 @@ def main():
 
     elif mode == "Live Camera":
         webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
-        # if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
-        #     webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
-        # else:
-        #     live_camera_local()
+        # live_camera_local()   # Uncomment when running in local machine
 
 
 if __name__ == "__main__":
