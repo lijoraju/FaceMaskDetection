@@ -8,7 +8,8 @@ import mediapipe as mp
 from src.model import load_mobilenetv3_model  
 from src.utils import load_config
 from huggingface_hub import hf_hub_download
-import os
+# import os
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 
 
 class_colors = {
@@ -48,7 +49,21 @@ transform = T.Compose([
 
 class_names = ['with_mask', 'without_mask', 'mask_weared_incorrect']
 
+class VideoProcessor(VideoProcessorBase):
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        predicted_class, probability, bbox = predict(image)
 
+        if predicted_class:
+            if bbox:
+                color = class_colors[predicted_class]
+                cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+                cv2.putText(img, f"{predicted_class}: {probability:.2f}", (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+        return img
+
+"""
 # Check if running in Streamlit Community Cloud
 if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
     # Running in Streamlit Community Cloud
@@ -101,7 +116,7 @@ else:
 
         video_capture.release()
         cv2.destroyAllWindows()
-
+"""
 
 def predict(image):
     """Predicts the mask status for a given image."""
@@ -172,10 +187,11 @@ def main():
                 st.write("No face detected.")
 
     elif mode == "Live Camera":
-        if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
-            webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
-        else:
-            live_camera_local()
+        webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
+        # if 'WEBRTC_CONNECT_TIMEOUT' in os.environ:
+        #     webrtc_streamer(key="live-detection", video_processor_factory=VideoProcessor)
+        # else:
+        #     live_camera_local()
 
 
 if __name__ == "__main__":
