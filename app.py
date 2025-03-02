@@ -29,10 +29,15 @@ else:
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+@st.cache_resource
 def load_model():
-    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_NAME)
-    model = load_mobilenetv3_model(model_path, num_classes=3, device=device)
-    return model
+    try:
+        model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_NAME)
+        model = load_mobilenetv3_model(model_path, num_classes=3, device=device)
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        st.stop()
 
 model = load_model()
 
