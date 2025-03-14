@@ -4,7 +4,7 @@ This project implements a face mask detection system using PyTorch, OpenCV, and 
 
 🔗 **Live Demo:** [Face Mask Detector](https://face-mask-detection-demo.streamlit.app/)   
 
-📌 **Model**: [HuggingFace Space](https://huggingface.co/lijoraju/face_mask_detector_model)
+📌 **Model**: [HuggingFace Spaces](https://huggingface.co/lijoraju/face_mask_detector_model)
 
 ## Table of Contents
 
